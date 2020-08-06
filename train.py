@@ -14,6 +14,7 @@ from tensorboardX import SummaryWriter
 from utils.optimizer import Optimizer
 from utils.audio import hop_length
 from utils.loss import MultiResolutionSTFTLoss
+from tqdm import tqdm
 
 def create_model(args):
 
@@ -43,8 +44,8 @@ def attempt_to_restore(generator, discriminator, g_optimizer,
                        d_optimizer, checkpoint_dir, use_cuda):
     checkpoint_list = os.path.join(checkpoint_dir, 'checkpoint')
 
-    if os.path.exists(checkpoint_list):
-        checkpoint_filename = open(checkpoint_list).readline().strip()
+    if True:
+        checkpoint_filename = 'continue.pt'
         checkpoint_path = os.path.join(
             checkpoint_dir, "{}".format(checkpoint_filename))
         print("Restore from {}".format(checkpoint_path))
@@ -113,7 +114,7 @@ def train(args):
     stft_criterion = MultiResolutionSTFTLoss().to(device)
     criterion = nn.MSELoss().to(device)
 
-    for epoch in range(args.epochs):
+    for epoch in tqdm(range(args.epochs)):
 
        collate = CustomerCollate(
            upsample_factor=hop_length,
@@ -126,8 +127,10 @@ def train(args):
                shuffle=True, pin_memory=True)
 
        #train one epoch
-       for batch, (samples, conditions) in enumerate(train_data_loader):
-
+       for batch, (samples, conditions) in tqdm(enumerate(train_data_loader)):
+            
+            
+            
             start = time.time()
             batch_size = int(conditions.shape[0] // num_gpu * num_gpu)
 
@@ -198,6 +201,10 @@ def train(args):
             if global_step > args.discriminator_train_start_steps:
                 print("Step: {} --adv_loss: {:.3f} --real_loss: {:.3f} --fake_loss: {:.3f} --sc_loss: {:.3f} --mag_loss: {:.3f} --Time: {:.2f} seconds".format(
                    global_step, adv_loss, real_loss, fake_loss, sc_loss, mag_loss, time_used))
+                total_time = args.epoch * batch * time_used 
+                time_lapsed = global_step * time_used
+                remaining_time = total_time - time_lapsed
+                print("Current epoch = {} out of {} and the total time remaining is {}".format(epoch, args.epochs, remaining_time))
             else:
                 print("Step: {} --sc_loss: {:.3f} --mag_loss: {:.3f} --Time: {:.2f} seconds".format(global_step, sc_loss, mag_loss, time_used))
 
@@ -224,8 +231,8 @@ def main():
     parser.add_argument('--input', type=str, default='data/train', help='Directory of training data')
     parser.add_argument('--num_workers',type=int, default=4, help='Number of dataloader workers.')
     parser.add_argument('--epochs', type=int, default=50000)
-    parser.add_argument('--checkpoint_dir', type=str, default="logdir", help="Directory to save model")
-    parser.add_argument('--resume', type=str, default=None, help="The model name to restore")
+    parser.add_argument('--checkpoint_dir', type=str, default="/content/gdrive/My Drive/logdir", help="Directory to save model")
+    parser.add_argument('--resume', type=str, default='', help="The model name to restore")
     parser.add_argument('--checkpoint_step', type=int, default=5000)
     parser.add_argument('--summary_step', type=int, default=100)
     parser.add_argument('--use_cuda', type=_str_to_bool, default=True)
@@ -235,7 +242,7 @@ def main():
     parser.add_argument('--decay_learning_rate', type=float, default=0.5)
     parser.add_argument('--local_condition_dim', type=int, default=80)
     parser.add_argument('--z_dim', type=int, default=128)
-    parser.add_argument('--batch_size', type=int, default=30)
+    parser.add_argument('--batch_size', type=int, default=75)
     parser.add_argument('--condition_window', type=int, default=100)
     parser.add_argument('--lamda_adv', type=float, default=4.0)
     parser.add_argument('--discriminator_train_start_steps', type=int, default=100000)
