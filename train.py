@@ -231,7 +231,7 @@ def main():
     parser.add_argument('--input', type=str, default='data/train', help='Directory of training data')
     parser.add_argument('--num_workers',type=int, default=4, help='Number of dataloader workers.')
     parser.add_argument('--epochs', type=int, default=50000)
-    parser.add_argument('--checkpoint_dir', type=str, default="/content/gdrive/My Drive/logdir", help="Directory to save model")
+    parser.add_argument('--checkpoint_dir', type=str, default="/content/drive/My Drive/logdir", help="Directory to save model")
     parser.add_argument('--resume', type=str, default='', help="The model name to restore")
     parser.add_argument('--checkpoint_step', type=int, default=5000)
     parser.add_argument('--summary_step', type=int, default=100)
